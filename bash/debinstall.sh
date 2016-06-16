@@ -17,11 +17,11 @@ if [ ! -d $FOLDER ]; then
 fi
 
 # set up local mirror in folder
-dpkg-scanpackages $FOLDER | gzip > $FOLDER/Packages.gz
+(cd $(dirname $FOLDER); dpkg-scanpackages $(basename $FOLDER) | gzip > $FOLDER/Packages.gz)
 
 # add mirror to sources list
 cat <<EOF > $SRCLIST
-deb [trusted=yes] file:///${FOLDER#/} ./
+deb [trusted=yes] file:///$(dirname ${FOLDER#/}) $(basename $FOLDER)/
 EOF
 
 # update package collection
