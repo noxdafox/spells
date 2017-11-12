@@ -18,8 +18,21 @@
   "pylint3 --max-line-length=80 --ignore=~s ~a 2> /dev/null")
 
 (define min-pylint-score 8)
-(define pylint-score-regex "[ 0-9].[0-9]")
-(define pylint-score-line-regex "Your code has been rated at [ 0-9].[0-9]")
+(define pylint-score-regex "1{0,1}[0-9].[0-9]")
+(define pylint-score-line-regex "Your code has been rated at 1{0,1}[0-9].[0-9]")
+
+(define pylint-message
+  "
+----------------------------------------
+            PyLint Score: ~a
+----------------------------------------
+")
+(define pep8-message
+  "
+----------------------------------------
+           Pep8 Status: ~a
+----------------------------------------
+")
 
 (define (main args)
   (let ((python-files (find-python-files "."))
@@ -33,16 +46,20 @@
 
 (define (run-pep8-check files exclusions)
   ;; Check the list of Python files with Pep8
-  (let ((results (run-checker pep8-checker files exclusions)))
-    (cond ((eq? (cdr results) 0) #t)
-          (else (display (car results)) #f))))
+  (let* ((results (run-checker pep8-checker files exclusions))
+         (check-status (cond ((eq? (cdr results) 0) #t)
+                             (else (display (car results)) #f))))
+    (format #t pep8-message (if check-status "SUCCESS" "FAILURE"))
+    check-status))
 
 (define (run-pylint-check files exclusions)
   ;; Check the list of Python files with PyLint
   (let* ((results (run-checker pylint-checker files exclusions))
-         (score (pylint-score (car results))))
-    (cond ((or (eq? score 0) (> score min-pylint-score)) #t)
-          (else (display (car results)) #f))))
+         (score (pylint-score (car results)))
+         (check-status (cond ((or (eq? score 0) (> score min-pylint-score)) #t)
+                             (else (display (car results)) #f))))
+    (format #t pylint-message score)
+    check-status))
 
 (define (pylint-score output)
   ;; Parse PyLint output and return its score.
