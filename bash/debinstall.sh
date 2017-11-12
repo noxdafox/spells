@@ -1,10 +1,11 @@
 #!/bin/bash
-# Set up a temporary debian mirror allowing it to install packages
+#
+# Set up a temporary debian mirror allowing to install packages
 # from a local folder.
-
+#
 # Usage: debinstall.sh <folder> <deb-package> <deb-package>
 
-FOLDER=$1
+FOLDER=$(realpath $1)
 SRCLIST=/etc/apt/sources.list.d/debinstall_tmp.list
 
 set -e
@@ -16,7 +17,7 @@ if [ ! -d $FOLDER ]; then
 fi
 
 # set up local mirror in folder
-dpkg-scanpackages $FOLDER | gzip > $FOLDER/Packages.gz
+(cd $(dirname $FOLDER); dpkg-scanpackages $(basename $FOLDER) | gzip > $FOLDER/Packages.gz)
 
 # add mirror to sources list
 cat <<EOF > $SRCLIST
