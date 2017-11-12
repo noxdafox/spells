@@ -2,6 +2,10 @@
 -e main -s
 !#
 
+;; INFO: run multiple code checkers in the current folder
+;; INFO: supported programming languages (Language: linters):
+;; INFO:  - Python: pep8, pylint
+
 (use-modules (ice-9 ftw))
 (use-modules (ice-9 match))
 (use-modules (ice-9 popen))
