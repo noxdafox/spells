@@ -12,6 +12,7 @@
 (use-modules (helpers))
 
 (use-modules (ice-9 ftw))
+(use-modules (srfi srfi-1))
 (use-modules (ice-9 match))
 (use-modules (ice-9 popen))
 (use-modules (ice-9 regex))
@@ -42,19 +43,34 @@
 ")
 
 (define (main args)
-  (let* ((git-exclusions (gitignore-files gitignore-file))
-         (python-files (find-python-files "." git-exclusions)))
-    ; Python project validation
+  (cond ((string=? (last args) "all")
+         (let* ((exclusions (gitignore-files gitignore-file))
+                (files (list-included-files "." exclusions)))
+           (exit (check-files files))))
+        ((string=? (last args) "commit")
+         (let ((files (list-staged-files)))
+           (exit (check-files files))))))
+
+(define (check-files files)
+  ;; For each supported file-type run the checkers
+  ;; Return 0 if all checks are ok
+  (let ((python (check-python-files files)))
+    (+ python)))
+
+(define (check-python-files files)
+  ;; Run Pep8 and PyLint for all listed Python files
+  ;; Return 0 if checks are ok, 1 otherwise
+  (let ((python-files (filter (lambda (path)
+                                (string-match python-file-regex path))
+                              files)))
     (when (not (null? python-files))
           (let ((pep8-status (run-pep8-check python-files))
                 (pylint-status (run-pylint-check python-files)))
-            (if (and pep8-status pylint-status)
-                (exit 0)
-                (exit 1))))))
+            (if (and pep8-status pylint-status) 0 1)))))
 
 (define (run-pep8-check files)
   ;; Check the list of Python files with Pep8
-  (let* ((results (run-checker pep8-checker files))
+  (let* ((results (run-command (format #f pep8-checker (string-join files))))
          (check-status (cond ((eq? (cdr results) 0) #t)
                              (else (display (car results)) #f))))
     (format #t pep8-message (if check-status "SUCCESS" "FAILURE"))
@@ -62,7 +78,7 @@
 
 (define (run-pylint-check files)
   ;; Check the list of Python files with PyLint
-  (let* ((results (run-checker pylint-checker files))
+  (let* ((results (run-command (format #f pylint-checker (string-join files))))
          (score (pylint-score (car results)))
          (check-status (cond ((or (eq? score 0) (> score min-pylint-score)) #t)
                              (else (display (car results)) #f))))
@@ -81,11 +97,9 @@
               0))
         0)))
 
-(define (run-checker checker-command files)
-  ;; Run the given checker command string against the given list of files
-  ;; Returns a pair containing the command output and its exit status
-  (let* ((command (format #f checker-command (string-join files)))
-         (port (open-input-pipe command)))
+(define (run-command command)
+  ;; Run the given command string and return the output and exit status
+  (let ((port (open-input-pipe command)))
     (cons (get-string-all port) (status:exit-val (close-pipe port)))))
 
 (define (gitignore-files path)
@@ -101,13 +115,18 @@
                 (string-split text #\newline)))
       '()))
 
-(define (find-python-files root exclusions)
-  ;; Search all Python files in the folder given as root
-  ;; Paths matching the patterns in the exclusions will be filtered away
+(define (list-staged-files)
+  ;; List the files staged by Git
+  (let ((results (run-command "git diff --cached --name-only")))
+    (cond ((eq? (cdr results) 0)
+           (string-split (car results) #\newline))
+          ((display (car results)) '()))))
+
+(define (list-included-files root exclusions)
+  ;; List the files not excluded via .gitignore
   (filter (lambda (path)
-            (and (string-match python-file-regex path)
-                 (not (any (lambda (exclusion)
-                             (fnmatch exclusion path 0)) exclusions))))
+            (not (any (lambda (exclusion)
+                        (fnmatch exclusion path 0)) exclusions)))
           (traverse-filesystem (file-system-tree root))))
 
 (define traverse-filesystem
