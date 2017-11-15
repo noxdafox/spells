@@ -11,8 +11,7 @@
             FNM_IGNORECASE
             FNM_IGNORECASE
             FNM_FILE_NAME
-            fnmatch
-            any))
+            fnmatch))
 
 (define FNM_NOMATCH 1)
 (define FNM_NOESCAPE #x01)
@@ -39,9 +38,3 @@
                 flags) 0)
           #t
           #f))))
-
-(define (any proc lst)
-  ;; return #t if any element of lst matches proc, #f otherwise
-  (cond ((null? lst) #f)
-        ((proc (car lst)) #t)
-        (else (any proc (cdr lst)))))
