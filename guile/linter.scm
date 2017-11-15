@@ -41,15 +41,24 @@
            Pep8 Status: ~a
 ----------------------------------------
 ")
+(define usage
+  "
+Usage: ~a <command>
+Commands:
+   all       check all supported source files but the ones in .gitignore
+   stashed   check all stashed supported source files, useful as pre-commit hook
+")
 
 (define (main args)
   (cond ((string=? (last args) "all")
          (let* ((exclusions (gitignore-files gitignore-file))
                 (files (list-included-files "." exclusions)))
            (exit (check-files files))))
-        ((string=? (last args) "commit")
+        ((string=? (last args) "stashed")
          (let ((files (list-staged-files)))
-           (exit (check-files files))))))
+           (exit (check-files files))))
+        (else (format #t usage (car args))
+              (exit 1))))
 
 (define (check-files files)
   ;; For each supported file-type run the checkers
