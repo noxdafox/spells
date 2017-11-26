@@ -6,8 +6,6 @@
 ;; INFO: supported programming languages (Language: linters):
 ;; INFO:  - Python: pep8, pylint
 
-(add-to-load-path "/home/noxdafox/development/spells/guile")
-
 (load "helpers.scm")
 (use-modules (helpers))
 
