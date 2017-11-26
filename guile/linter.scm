@@ -17,7 +17,7 @@
 (use-modules (ice-9 textual-ports))
 (use-modules (ice-9 curried-definitions))
 
-(define python-file-regex ".*.py$")
+(define python-file-regex (make-regexp ".*.py$"))
 (define gitignore-file ".gitignore")
 
 (define pep8-checker "pep8 --max-line-length=80 ~a")
@@ -68,7 +68,7 @@ Commands:
   ;; Run Pep8 and PyLint for all listed Python files
   ;; Return 0 if checks are ok, 1 otherwise
   (let ((python-files (filter (lambda (path)
-                                (string-match python-file-regex path))
+                                (regexp-exec python-file-regex path))
                               files)))
     (when (not (null? python-files))
           (let ((pep8-status (run-pep8-check python-files))
