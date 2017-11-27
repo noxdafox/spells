@@ -4,10 +4,7 @@
 
 ;; INFO: list all Python projects at the given path
 ;; INFO: output in CSV form with ":" as a separator
-;; INFO: Python projects are those matching the following paths
-;; INFO:  - <path>/<project name>/<module name>/__init__.py
-;; INFO:  - <path>/<project name>/lib/<module name>/__init__.py
-;; INFO:  - <path>/<project name>/src/<module name>/__init__.py
+;; INFO: Python projects are those with a setup.py file in their root folder
 
 (use-modules (ice-9 ftw))
 (use-modules (ice-9 match))
@@ -15,13 +12,8 @@
 (use-modules (srfi srfi-1))
 
 (define max-depth 4)
-
-;; foo/bar/baz/__init__.py
-;; foo/bar/lib/baz/__init__.py
-;; foo/bar/src/baz/__init__.py
-(define python-project-regex
-  (make-regexp ".*/setup.py"))
 (define dirname-regex (make-regexp ".*/"))
+(define python-project-regex (make-regexp ".*/setup.py"))
 
 (define (main args)
   (let ((path (string-trim-right (last args) #\/)))
