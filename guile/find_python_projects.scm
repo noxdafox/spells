@@ -20,24 +20,25 @@
 ;; foo/bar/lib/baz/__init__.py
 ;; foo/bar/src/baz/__init__.py
 (define python-project-regex
-  (make-regexp "^[^/]+/[^/]+/((src|lib)/){0,1}[^/]+/__init__.py$"))
+  (make-regexp ".*/setup.py"))
 (define dirname-regex (make-regexp ".*/"))
 
 (define (main args)
-  (let* ((path (string-trim-right (last args) #\/))
-         (dirname (string-trim-right
-                   (match:substring (regexp-exec dirname-regex path)) #\/)))
-    (display (string-join
-              (join-path dirname (find-python-projects path max-depth)) ":"))))
+  (let ((path (string-trim-right (last args) #\/)))
+    (display (string-join (find-python-projects path max-depth) ":"))))
 
 (define (find-python-projects root max-depth)
   ;; Search all Python projects in the folder given as root
-  (filter (lambda (path)
-            (regexp-exec python-project-regex path))
-          (traverse-filesystem (file-system-tree root) 0 max-depth)))
+  (map (lambda (path)
+         ; remove basename of both root and path
+         (string-join (list (dirname root) (dirname path)) ""))
+       (filter (lambda (path)
+                 ; traverse the filesystem looking for python project folders
+                 (regexp-exec python-project-regex path))
+               (traverse-filesystem (file-system-tree root) 0 max-depth))))
 
 (define (traverse-filesystem root depth max-depth)
-  ;; Traverses the filesystem from root stopping at the given max-depth
+  ;; Traverse the filesystem from root stopping at the given max-depth
   (if (< depth max-depth)
       (match root
              ((name stat) name)
@@ -55,3 +56,6 @@
                  (join-path parent (cdr children))))
         (else (cons (string-join (list parent (car children)) "/")
                     (join-path parent (cdr children))))))
+
+(define (dirname path)
+  (match:substring (regexp-exec dirname-regex path)))
