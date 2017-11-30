@@ -25,21 +25,26 @@
          ; remove basename of both root and path
          (string-join (list (dirname root) (dirname path)) ""))
        (filter (lambda (path)
-                 ; traverse the filesystem looking for python project folders
-                 (regexp-exec python-project-regex path))
-               (traverse-filesystem (file-system-tree root) 0 max-depth))))
+                   (regexp-exec python-project-regex path))
+               (traverse-filesystem root max-depth))))
 
-(define (traverse-filesystem root depth max-depth)
-  ;; Traverse the filesystem from root stopping at the given max-depth
-  (if (< depth max-depth)
-      (match root
-             ((name stat) name)
-             ((name stat children ...)
-              (join-path name (map (lambda (child)
-                                     (traverse-filesystem
-                                      child (+ 1 depth) max-depth))
-                                   children))))
-      ""))
+(define (traverse-filesystem root max-depth)
+  ;; Traverse the filesystem from root up until max-depth is reached
+  ;; return a flat list with the content of given folder
+  (let ((depth 0))
+    (filesystem-paths
+     (file-system-tree root
+                       (lambda (name stat)
+                         (cond ((< depth max-depth) (set! depth (+ depth 1)) #t)
+                               (else #f)))))))
+
+(define filesystem-paths
+  ;; Discard the stat information retrieved by file-system-tree and join
+  ;; the path of the files. Folders are discarded.
+  (match-lambda
+   ((name stat) name)
+   ((name stat children ...)
+    (join-path name (map filesystem-paths children)))))
 
 (define (join-path parent children)
   (cond ((null? children) '())
