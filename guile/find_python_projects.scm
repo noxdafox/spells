@@ -33,10 +33,11 @@
   ;; return a flat list with the content of given folder
   (let ((depth 0))
     (filesystem-paths
-     (file-system-tree root
-                       (lambda (name stat)
-                         (cond ((< depth max-depth) (set! depth (+ depth 1)) #t)
-                               (else #f)))))))
+     (file-system-tree
+      root
+      (lambda (name stat)
+        (cond ((< depth max-depth) (set! depth (+ depth 1)) #t)
+              (else (set! depth (- depth 1))#f)))))))
 
 (define filesystem-paths
   ;; Discard the stat information retrieved by file-system-tree and join
