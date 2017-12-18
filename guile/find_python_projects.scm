@@ -13,12 +13,15 @@
 (use-modules (ice-9 regex))
 (use-modules (srfi srfi-1))
 
+(define default-max-depth 4)
 (define dirname-regex (make-regexp ".*/"))
 (define python-project-regex (make-regexp ".*/setup.py"))
 
 (define (main args)
   (let ((path (string-trim-right (second args) #\/))
-        (max-depth (string->number (last args))))
+        (max-depth (if (> (length args) 2)
+                       (string->number (last args))
+                       default-max-depth)))
     (display (string-join (find-python-projects path max-depth) ":"))))
 
 (define (find-python-projects root max-depth)
