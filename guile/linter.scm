@@ -22,6 +22,7 @@
 
 (define pep8-checker "pep8 --max-line-length=80 ~a")
 (define pylint-checker "pylint3 --max-line-length=80 ~a 2> /dev/null")
+(define git-diff-command "git diff --diff-filter=ACM --cached --name-only")
 
 (define min-pylint-score 8)
 (define pylint-score-regex "1{0,1}[0-9].[0-9]")
@@ -124,7 +125,7 @@ Commands:
 
 (define (list-staged-files)
   ;; List the files staged by Git
-  (let ((results (run-command "git diff --cached --name-only")))
+  (let ((results (run-command git-diff-command)))
     (cond ((eq? (cdr results) 0)
            (string-split (car results) #\newline))
           ((display (car results)) '()))))
