@@ -88,7 +88,7 @@ Commands:
   ;; Check the list of Python files with PyLint
   (let* ((results (run-command (format #f pylint-checker (string-join files))))
          (score (pylint-score (car results)))
-         (check-status (cond ((or (eq? score 0) (> score min-pylint-score)) #t)
+         (check-status (cond ((or (eq? score 0) (>= score min-pylint-score)) #t)
                              (else (display (car results)) #f))))
     (format #t pylint-message score)
     check-status))
